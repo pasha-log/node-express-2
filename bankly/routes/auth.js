@@ -5,6 +5,10 @@ const express = require('express');
 const router = express.Router();
 const createTokenForUser = require('../helpers/createToken');
 
+// BUG #7: No proper JSONschema validation was implemented. Now there is.
+const validateJsonSchema = require("../helpers/userSchema")
+const userRegisterSchema = require("../schemas/userRegister.json");
+
 
 /** Register user; return token.
  *
@@ -12,12 +16,15 @@ const createTokenForUser = require('../helpers/createToken');
  *
  *  Returns {token: jwt-token-string}.
  *
+ * BUG #5: admin boolean has been added.
  */
 
 router.post('/register', async function(req, res, next) {
   try {
-    const { username, password, first_name, last_name, email, phone } = req.body;
-    let user = await User.register({username, password, first_name, last_name, email, phone});
+    const { username, password, first_name, last_name, email, phone, admin } = req.body;
+    // BUG #7: Including a schema validator.
+    validateJsonSchema(req.body, userRegisterSchema);
+    let user = await User.register({username, password, first_name, last_name, email, phone, admin });
     const token = createTokenForUser(username, user.admin);
     return res.status(201).json({ token });
   } catch (err) {
